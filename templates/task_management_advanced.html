@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>UHSVTask</title>
+</head>
+
+<style>
+    /* Base Styles */
+    html,
+    body {
+        height: 100%;
+        margin: 0;
+        font-family: Arial, sans-serif;
+    }
+
+    body {
+        background-color: #171717;
+        color: #FFFFFF;
+        display: flex;
+        flex-direction: column;
+    }
+
+    h1,
+    h2,
+    h3,
+    p {
+        margin: 0;
+        padding: 0;
+    }
+
+    /* Content Styling */
+    #content {
+        padding: 22px;
+
+    }
+
+    /* Header and Footer Styling */
+    header,
+    footer {
+        background-color: #3a0066;
+        color: white;
+        text-align: center;
+        padding: 22px;
+        border-bottom: 1px solid #3a0066;
+        border-top: 1px solid #3a0066;
+    }
+
+    /* Navigation Styling */
+    /* Navigation Styling */
+    nav ul {
+        list-style-type: none;
+        padding: 0;
+        /* Resetting the padding to 0 */
+        margin: 20px;
+        /* Resetting the margin to 0 */
+        background-color: #171717;
+        text-align: center;
+    }
+
+    nav ul li {
+        display: inline-block;
+        padding: 0 5px;
+        /* Adjusted padding for left and right */
+        margin: 0;
+        /* Resetting the margin to 0 */
+    }
+
+    nav ul li a {
+        color: white;
+        text-decoration: none;
+    }
+
+    nav ul li a:hover {
+        text-decoration: underline;
+    }
+
+    /* Main Content Styling */
+    main {
+        padding: 20px;
+        background-color: #242424;
+        border-radius: 8px;
+        box-shadow: 0 0 10px #444;
+    }
+
+    #task-list {
+        list-style-type: none;
+        padding: 0;
+    }
+
+    .task {
+        padding: 15px;
+        margin: 5px 0;
+        background-color: #333;
+        border-radius: 8px;
+    }
+
+    /* Input and Button Styling */
+    input,
+    textarea,
+    button {
+        padding: 10px;
+        margin: 10px 0;
+        border: 1px solid #555;
+        border-radius: 5px;
+        background-color: #333;
+        color: #FFFFFF;
+        width: 100%;
+    }
+
+    input:focus,
+    textarea:focus,
+    button:focus {
+        outline: none;
+        border-color: #777;
+    }
+
+    button {
+        cursor: pointer;
+        background-color: #3a0066;
+    }
+
+    button:hover {
+        background-color: #4e007f;
+    }
+
+    /* Task Status Colors */
+    .overdue {
+        color: red;
+    }
+
+    .upcoming {
+        color: green;
+    }
+
+    /* Flex Row for Inputs */
+    .input-row {
+        width: 99.3%;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 50px;
+    }
+
+    #new-task,
+    #task-description {
+        width: 98%;
+        margin-left: auto;
+        margin-right: auto;
+    }
+
+    .overdue {
+        color: red;
+    }
+
+    .upcoming {
+        color: green;
+    }
+
+    .datetime-input,
+    .edit-button {
+        float: right;
+        /* This makes the elements float to the right */
+        margin-left: 10px;
+        /* Spacing between the input and the button */
+        width: auto;
+        /* Adjusts the width to the content */
+    }
+
+    .edit-button {
+        padding: 5px 10px;
+        /* Reduce padding to decrease button size */
+        font-size: 14px;
+        /* Adjust font size if necessary */
+    }
+    .description-input {
+    float: right;   /* This makes the element float to the right */
+    margin-left: 10px; /* Spacing */
+    width: 200px;   /* Adjusts the width to the content */
+    height: 60px;  /* Set a specific height for the textarea */
+}
+
+</style>
+
+<body>
+    <div id="content">
+        <header>
+            <h1>UHSVTask V1.0</h1>
+        </header>
+
+        <nav>
+            <ul>
+                <li>Welcome, {{ username }}!</li>
+                <li><a href="/logout">Logout</a></li>
+            </ul>
+        </nav>
+
+        <main id="main-content">
+            <h2>Welcome to the Advanced Task Management App</h2>
+            <p>This application helps you manage your tasks efficiently.</p>
+
+            <div id="error-message" style="display:none;color:red;"></div>
+            <label for="assign-to-student">Assign to:</label>
+            <select id="assign-to-student">
+                <option value="" selected disabled>Select a user</option>
+                {% for student in students %}
+                <option value="{{ student[0] }}">{{ student[1] }}</option>
+                {% endfor %}
+            </select>
+
+
+            <input type="text" id="new-task" placeholder="New Task">
+            <div class="input-row">
+                <input type="datetime-local" id="due-date-time" placeholder="Due Date and Time">
+                <input type="number" id="estimated-time" placeholder="Estimated Time (minutes)">
+            </div>
+            <textarea id="task-description" rows="4" placeholder="Task Description"></textarea>
+
+            <button id="add-task-button">Add Task</button>
+
+            <ul id="task-list"></ul>
+        </main>
+    </div>
+
+    <footer>
+        <p>&copy; 2023 Advanced Task Management App</p>
+    </footer>
+    <script>
+        const user_role = "{{ role }}";  // This takes the role value passed to the template and assigns it to user_role
+    </script>
+    <script>
+
+        document.addEventListener('DOMContentLoaded', function () {
+            console.log('DOMContentLoaded event fired');
+            const addTaskButton = document.getElementById('add-task-button');
+            const filterStatus = document.getElementById('filter-status');
+
+            fetchTasks();
+
+            addTaskButton.addEventListener('click', function () {
+                console.log('Add Task Button Clicked');
+                addTask();
+            });
+
+            filterStatus.addEventListener('change', function () {
+                console.log('Filter Status Changed');
+                updateTaskList();
+            });
+        });
+        document.addEventListener('DOMContentLoaded', function () {
+            Notification.requestPermission().then(function (result) {
+                if (result === 'granted') {
+                    console.log('Notification permissions granted.');
+                } else {
+                    console.log('Notification permissions denied.');
+                }
+            });
+        });
+        function sendNotification(message) {
+            if (Notification.permission === 'granted') {
+                new Notification('Task Management App', {
+                    body: message,
+                    //icon: 'path_to_icon.png' // Optional: You can provide an icon for the notification.
+                });
+            }
+        }
+        function scheduleNotification(task) {
+            const currentTime = new Date();
+            const dueDateTime = new Date(task.dueDate);
+            const notifyTime = dueDateTime.getTime() - (task.estimated_time * 60 * 1000);
+
+            if (currentTime.getTime() < notifyTime) {
+                setTimeout(() => {
+                    sendNotification(`Reminder: "${task.text}" is due soon!`);
+                }, notifyTime - currentTime.getTime());
+            }
+        }
+
+        function fetchTasks() {
+            // Get the selected user ID from the dropdown
+            const selectedUserId = document.getElementById('assign-to-student').value;
+
+            // Fetch tasks for the selected user
+            fetch(`/api/tasks/${selectedUserId}`)
+                .then(response => response.json())
+                .then(data => {
+                    tasks = data;
+                    tasks.forEach(task => scheduleNotification(task));
+
+                    if (user_role === 'staff') {
+                        fetch('/api/students')
+                            .then(response => response.json())
+                            .then(students => {
+                                const studentDropdown = document.getElementById('assign-to-student');
+                                students.forEach(student => {
+                                    const option = document.createElement('option');
+                                    option.value = student.id;
+                                    option.textContent = student.username;
+                                    studentDropdown.appendChild(option);
+                                });
+                            });
+                    }
+
+                    updateTaskList();
+                })
+                .catch(err => console.error(err));
+        }
+
+        function editDescription(taskId) {
+            const descriptionInput = document.getElementById(`edit-description-${taskId}`);
+            const updatedDescription = descriptionInput.value;
+
+            const updatedTask = {
+                description: updatedDescription
+            };
+
+            // Now, you can send a request to your backend to update the task's description.
+            // For instance, if you're using the fetch API, you might do something like:
+
+            fetch(`/api/tasks/${taskId}/edit-description`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(updatedTask)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Description updated:', data);
+                    // Refresh the tasks or make any necessary updates here
+                    fetchTasks();
+                })
+                .catch(err => console.error('Edit Description Error:', err));
+        }
+
+        function addTask() {
+            console.log('Adding new task');
+
+            const taskText = document.getElementById('new-task').value.trim();
+            const estimatedTime = document.getElementById('estimated-time').value;
+            const dueDateTime = document.getElementById('due-date-time').value;
+            const taskDescription = document.getElementById('task-description').value.trim();
+
+            if (taskText === '' || dueDateTime === '') {
+                console.log('Task or Due Date is empty');
+                displayError('Please enter a task and its due date and time.');
+                return;
+            }
+
+            const assignTo = document.getElementById('assign-to-student').value;
+
+            const newTask = {
+                text: taskText,
+                dueDate: dueDateTime,
+                estimated_time: estimatedTime,
+                description: taskDescription,
+                user_id: assignTo  // Assign task to the selected user in the dropdown
+            };
+
+            fetch('/api/tasks', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify(newTask)
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Task added:', data);
+                    tasks.push({ id: data.id, ...newTask });
+                    document.getElementById('new-task').value = '';
+                    document.getElementById('due-date-time').value = '';
+                    document.getElementById('estimated-time').value = '';
+                    document.getElementById('task-description').value = '';
+                    scheduleNotification({ id: data.id, ...newTask });
+                    updateTaskList();
+                })
+                .catch(err => console.error('Add Task Error:', err));
+        }
+
+
+        function updateTaskList() {
+            console.log('Updating task list');
+
+            // Sorting tasks based on dueDate
+            tasks.sort((a, b) => new Date(a.dueDate) - new Date(b.dueDate));
+
+            const taskList = document.getElementById('task-list');
+            taskList.innerHTML = '';
+
+            tasks.forEach((task, index) => {
+                console.log('Rendering Task:', task);
+
+                const taskItem = document.createElement('li');
+                taskItem.className = 'task';
+
+                const dueDateObj = new Date(task.dueDate);
+                const dueDateStr = `${dueDateObj.toLocaleDateString()} at ${dueDateObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}`;
+                const isOverdue = dueDateObj < new Date();
+                const dueClass = isOverdue ? 'overdue' : 'upcoming';
+
+                const estimatedTimeString = task.estimated_time ? `${task.estimated_time} minutes` : 'N/A';
+
+                // Use the assigned_by_name property or default to 'N/A' if not present
+                const assignedByName = task.assigned_by_name || 'N/A';
+
+                taskItem.innerHTML = `
+    <input type="datetime-local" class="datetime-input" id="edit-due-date-${task.id}" value="${task.dueDate}">
+    <button class="edit-button" onclick="editTask(${task.id})">Edit Due Date</button>
+    <textarea class="description-input" id="edit-description-${task.id}"></textarea>
+    <button class="edit-button" onclick="editDescription(${task.id})">Edit Description</button>
+    Task: ${task.text} <br>
+    Description: ${task.description} <br>
+    Estimated Time: ${task.estimated_time} minutes <br>
+    <span class="${dueClass}">Due: ${dueDateStr}</span> <br>
+    Assigned by: ${task.assigned_by_name} <br>
+    <button onclick="deleteTask(${task.id})">Delete</button>
+`;
+
+
+                taskList.appendChild(taskItem);
+            });
+        }
+
+
+        function editTask(taskId) {
+            const newDueDate = document.getElementById(`edit-due-date-${taskId}`).value;
+
+            fetch(`/api/tasks/${taskId}`, {
+                method: 'PUT',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    dueDate: newDueDate
+                })
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log(data.message);
+                    fetchTasks();  // Refresh the tasks after editing
+                })
+                .catch(err => console.error('Edit Task Error:', err));
+        }
+
+
+
+        function deleteTask(taskId) {
+            console.log(`Deleting task with ID: ${taskId}`);
+            fetch(`/api/tasks/${taskId}`, {
+                method: 'DELETE'
+            })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Delete task response:', data);
+                    fetchTasks();
+                })
+                .catch(err => console.error('Delete Task Error:', err));
+        }
+
+        function displayError(message) {
+            console.log(`Displaying error: ${message}`);
+            const errorDiv = document.getElementById('error-message');
+            errorDiv.innerText = message;
+            errorDiv.style.display = 'block';
+            setTimeout(() => {
+                errorDiv.style.display = 'none';
+            }, 3000);
+        }
+        document.getElementById('assign-to-student').addEventListener('change', function () {
+            fetchTasksForSelectedUser();
+        });
+
+        function fetchTasksForSelectedUser() {
+            const selectedUserId = document.getElementById('assign-to-student').value;
+
+            // Fetch tasks for the selected user
+            fetch(`/api/tasks/${selectedUserId}`)
+                .then(response => {
+                    if (response.status == 403) {
+                        throw new Error("Unauthorized access");
+                    }
+                    return response.json();
+                })
+                .then(data => {
+                    tasks = data;
+                    updateTaskList();
+                })
+                .catch(err => console.error('Fetch Tasks Error:', err));
+        }
+
+    </script>
+
+</body>
+
+</html>

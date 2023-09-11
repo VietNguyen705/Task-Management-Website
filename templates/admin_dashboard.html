@@ -1,0 +1,82 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <title>Admin Dashboard</title>
+</head>
+
+<body>
+    <h2>Pending Approvals</h2>
+    {% if request.args.get('message') %}
+    <div class="alert alert-warning">
+        {{ request.args.get('message') }}
+    </div>
+    {% endif %}
+
+    <ul>
+        {% for user in users %}
+        <li>
+            User ID: {{ user[0] }} |
+            Username: {{ user[1] }} |
+            Email: {{ user[2] }} |
+            <form action="/admin/approve/{{ user[0] }}" method="post" style="display: inline;">
+                <select name="role">
+                    <option value="student">Student</option>
+                    <option value="staff">Staff</option>
+                </select>
+                <input type="submit" value="Approve">
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+    <h2>Assign Students to Staff</h2>
+    <form action="/admin/assign-student" method="post">
+        <label for="staff">Select Staff:</label>
+        <select name="staff_id" id="staff">
+            {% for staff in staff_members %}
+            <option value="{{ staff[0] }}">{{ staff[1] }}</option>
+            {% endfor %}
+        </select>
+
+        <label for="student">Select Student:</label>
+        <select name="student_id" id="student">
+            {% for student in students %}
+            <option value="{{ student[0] }}">{{ student[1] }}</option>
+            {% endfor %}
+        </select>
+
+
+        <input type="submit" value="Assign">
+    </form>
+    <h2>Current Assignments</h2>
+    <ul>
+        {% for assignment in assignments %}
+        <li>
+            Staff: {{ assignment[1] }} -> Student: {{ assignment[3] }}
+            <form action="/admin/remove-assignment" method="post">
+                <input type="hidden" name="staff_id" value="{{ assignment[0] }}">
+                <input type="hidden" name="student_id" value="{{ assignment[2] }}">
+                <input type="submit" value="Remove">
+            </form>
+        </li>
+        {% endfor %}
+    </ul>
+
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            let form = document.querySelector('form[action="/admin/assign-student"]');
+            if (form) {
+                form.addEventListener('submit', function () {
+                    setTimeout(function () {
+                        form.reset();
+                    }, 10);
+                });
+            }
+        });
+    </script>
+
+</body>
+
+</html>
