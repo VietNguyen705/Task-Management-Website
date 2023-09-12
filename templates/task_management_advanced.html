@@ -260,8 +260,7 @@
         function sendNotification(message) {
             if (Notification.permission === 'granted') {
                 new Notification('Task Management App', {
-                    body: message,
-                    //icon: 'path_to_icon.png' // Optional: You can provide an icon for the notification.
+                    body: message
                 });
             }
         }
@@ -315,8 +314,7 @@
                 description: updatedDescription
             };
 
-            // Now, you can send a request to your backend to update the task's description.
-            // For instance, if you're using the fetch API, you might do something like:
+            
 
             fetch(`/api/tasks/${taskId}/edit-description`, {
                 method: 'PUT',
